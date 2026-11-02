@@ -15,7 +15,7 @@ outputs/alerts.db-wal
 outputs/alert_snapshots/
 frontend/node_modules/
 frontend/dist/
-
+outputs/
 
 
 
