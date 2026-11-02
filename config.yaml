@@ -1,0 +1,60 @@
+paths:
+  dataset_root: "Real Life Violence Dataset"
+  non_violence_dir: "Real Life Violence Dataset/NonViolence"
+  violence_dir: "Real Life Violence Dataset/Violence"
+  data_dir: "data"
+  yolo_cls_dir: "data/yolo_cls"
+  output_dir: "runs"
+  log_dir: "runs/logs"
+  model_weights: "models/yolo11n.pt"
+  classifier_weights: "models/best.pt"
+
+video:
+  sampling_fps: 2
+
+model:
+  image_size: 640
+  confidence_threshold: 0.25
+  iou_threshold: 0.45
+
+data_preparation:
+  frame_interval: 10
+  max_frames_per_video: 30
+  image_size: 224
+  random_seed: 42
+  train_ratio: 0.7
+  val_ratio: 0.2
+  test_ratio: 0.1
+
+training:
+  epochs: 50
+  imgsz: 224
+  batch: 16
+  patience: 10
+  seed: 42
+  workers: 4
+  augment: true
+  auto_augment: "randaugment"
+  erasing: 0.4
+
+evaluation:
+  batch_size: 16
+  max_misclassified_examples: 20
+  violence_recall_warning_threshold: 0.9
+
+inference:
+  imgsz: 224
+  window_size: 16
+  violence_threshold: 0.8
+  alert_duration_seconds: 2.0
+  fallback_fps: 30.0
+  display: true
+  person_detection:
+    model: "yolo11n.pt"
+    image_size: 640
+    confidence: 0.25
+    person_class_id: 0
+    context_scale: 2.0
+
+logging:
+  level: "INFO"

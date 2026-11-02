@@ -1,0 +1,12 @@
+2026-10-28 23:48:23,878 | INFO | mob_alert | Starting Mob-Alert project setup validation.
+2026-10-28 23:48:23,879 | INFO | mob_alert | Project setup validated.
+2026-10-28 23:48:23,879 | INFO | mob_alert | Dataset root: C:\Users\sm713\Downloads\Mob-Alert\Real Life Violence Dataset
+2026-10-28 23:48:23,879 | INFO | mob_alert | Class directories: NonViolence, Violence
+2026-10-28 23:48:23,880 | INFO | mob_alert | Output directory: C:\Users\sm713\Downloads\Mob-Alert\outputs
+2026-10-28 23:48:23,880 | INFO | mob_alert | Log file: C:\Users\sm713\Downloads\Mob-Alert\logs\mob_alert.log
+2026-10-28 23:48:41,582 | INFO | mob_alert | Starting Mob-Alert project setup validation.
+2026-10-28 23:48:41,583 | INFO | mob_alert | Project setup validated.
+2026-10-28 23:48:41,583 | INFO | mob_alert | Dataset root: C:\Users\sm713\Downloads\Mob-Alert\Real Life Violence Dataset
+2026-10-28 23:48:41,583 | INFO | mob_alert | Class directories: NonViolence, Violence
+2026-10-28 23:48:41,583 | INFO | mob_alert | Output directory: C:\Users\sm713\Downloads\Mob-Alert\outputs
+2026-10-28 23:48:41,583 | INFO | mob_alert | Log file: C:\Users\sm713\Downloads\Mob-Alert\logs\mob_alert.log

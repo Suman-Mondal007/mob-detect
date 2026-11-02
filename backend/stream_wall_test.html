@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mob-Alert CCTV stream test</title>
+    <style>
+      :root { color-scheme: dark; font: 15px/1.45 system-ui, sans-serif; }
+      body { margin: 0; padding: 1.25rem; background: #101318; color: #eef2f8; }
+      header { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+      h1 { margin: 0 auto 0 0; font-size: 1.25rem; }
+      button { padding: .55rem .85rem; border: 0; border-radius: .4rem; cursor: pointer; }
+      .note { margin: 1rem 0; padding: .7rem; background: #302719; color: #ffe2a8; }
+      #state { color: #aeb8c7; }
+      #wall { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
+      article { overflow: hidden; border: 1px solid #343b46; border-radius: .5rem; background: #1a1f27; }
+      article.alert { border-color: #ff334f; animation: alert-flash .8s steps(2, start) infinite; }
+      article header { padding: .45rem .65rem; }
+      article img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #080a0d; }
+      .camera-state { padding: 0 .65rem .45rem; color: #aeb8c7; }
+      .camera-state.alert { color: #ff6478; font-weight: 700; }
+      @keyframes alert-flash { to { border-color: #61202b; } }
+      @media (max-width: 760px) { #wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (max-width: 480px) { #wall { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Mob-Alert — six-camera stream test</h1>
+      <label>API <input id="api" value="http://127.0.0.1:8000" size="24"></label>
+      <button id="connect">Connect</button>
+      <button id="stop" disabled>Stop</button>
+    </header>
+    <p class="note">Prototype screening tool, not a validated safety system.</p>
+    <p id="state">Not connected.</p>
+    <main id="wall"></main>
+    <script>
+      const apiInput = document.querySelector("#api");
+      const wall = document.querySelector("#wall");
+      const state = document.querySelector("#state");
+      const tiles = new Map();
+      let events;
+
+      function stop() {
+        if (events) events.close();
+        events = undefined;
+        wall.replaceChildren();
+        tiles.clear();
+        document.querySelector("#connect").disabled = false;
+        document.querySelector("#stop").disabled = true;
+        state.textContent = "Disconnected.";
+      }
+
+      async function connect() {
+        stop();
+        const api = apiInput.value.trim().replace(/\/+$/, "");
+        const response = await fetch(`${api}/cameras`);
+        if (!response.ok) throw new Error(`Camera list failed: HTTP ${response.status}`);
+        const cameras = (await response.json()).cameras.filter(camera => camera.enabled).slice(0, 6);
+        if (!cameras.length) throw new Error("No enabled cameras. Add or seed cameras first.");
+
+        for (const camera of cameras) {
+          const tile = document.createElement("article");
+          const title = document.createElement("header");
+          const label = document.createElement("strong");
+          label.textContent = `${camera.name} — ${camera.location || camera.id}`;
+          const image = document.createElement("img");
+          image.alt = `${camera.name} live grid stream`;
+          image.src = `${api}/stream/${encodeURIComponent(camera.id)}?quality=grid`;
+          const cameraState = document.createElement("div");
+          cameraState.className = "camera-state";
+          cameraState.textContent = "Waiting for camera status…";
+          tile.append(title, image, cameraState);
+          title.append(label);
+          wall.append(tile);
+          tiles.set(camera.id, { tile, cameraState });
+        }
+
+        const socketUrl = api.replace(/^http/, "ws") + "/ws/events";
+        events = new WebSocket(socketUrl);
+        events.onopen = () => {
+          state.textContent = `Streaming ${cameras.length} camera(s); events connected.`;
+          document.querySelector("#connect").disabled = true;
+          document.querySelector("#stop").disabled = false;
+        };
+        events.onmessage = message => {
+          const event = JSON.parse(message.data);
+          if (event.type === "camera_status") {
+            const online = event.cameras.filter(camera => camera.online).length;
+            state.textContent = `${online}/${event.cameras.length} online — status updates live.`;
+            for (const camera of event.cameras) {
+              const elements = tiles.get(camera.camera_id);
+              if (!elements) continue;
+              const isAlert = camera.state === "ALERT";
+              elements.tile.classList.toggle("alert", isAlert);
+              elements.cameraState.classList.toggle("alert", isAlert);
+              elements.cameraState.textContent = `${camera.online ? "Online" : "Offline"} — ${camera.state} — confidence ${camera.smoothed_confidence === null ? "n/a" : (camera.smoothed_confidence * 100).toFixed(1) + "%"}`;
+            }
+          } else if (event.type === "alert") {
+            state.textContent = `ALERT: ${event.camera_id} (${(event.smoothed_confidence * 100).toFixed(1)}%)`;
+          } else if (event.type === "heartbeat") {
+            state.textContent = "Event heartbeat received.";
+          }
+        };
+        events.onerror = () => { state.textContent = "WebSocket error. Check API URL and server."; };
+        events.onclose = () => {
+          document.querySelector("#connect").disabled = false;
+          document.querySelector("#stop").disabled = true;
+        };
+      }
+
+      document.querySelector("#connect").addEventListener("click", () => {
+        connect().catch(error => { state.textContent = error.message; });
+      });
+      document.querySelector("#stop").addEventListener("click", stop);
+    </script>
+  </body>
+</html>
